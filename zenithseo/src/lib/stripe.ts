@@ -48,10 +48,10 @@ export async function createCheckoutSession({
           price_data: {
             currency: 'brl',
             product_data: {
-              name: PLANS.PRO.name,
-              description: PLANS.PRO.features.join(', '),
+              name: PRO_PLAN.name,
+              description: PRO_PLAN.features.join(', '),
             },
-            unit_amount: PLANS.PRO.price,
+            unit_amount: PRO_PLAN.price,
             recurring: {
               interval: 'month',
             },

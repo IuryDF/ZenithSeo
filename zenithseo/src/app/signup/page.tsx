@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signUp } from '@/lib/auth'
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator'
+import { validatePassword, PasswordValidation } from '@/lib/password-validation'
 
 export default function Signup() {
   const [email, setEmail] = useState('')
@@ -12,21 +14,29 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidation | null>(null)
   const router = useRouter()
+
+  const handlePasswordValidation = (validation: PasswordValidation) => {
+    setPasswordValidation(validation)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
+    // Validar se as senhas coincidem
     if (password !== confirmPassword) {
       setError('As senhas não coincidem')
       setLoading(false)
       return
     }
 
-    if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres')
+    // Validar força da senha
+    const validation = validatePassword(password)
+    if (!validation.isValid) {
+      setError('A senha não atende aos critérios de segurança necessários')
       setLoading(false)
       return
     }
@@ -112,9 +122,15 @@ export default function Signup() {
                 autoComplete="new-password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Senha (mínimo 6 caracteres)"
+                placeholder="Senha (mínimo 8 caracteres)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+              />
+              {/* Indicador de força da senha */}
+              <PasswordStrengthIndicator 
+                password={password}
+                onValidationChange={handlePasswordValidation}
+                showDetails={true}
               />
             </div>
             <div>
@@ -144,7 +160,7 @@ export default function Signup() {
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !passwordValidation?.isValid || password !== confirmPassword}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Criando conta...' : 'Criar conta'}
@@ -152,7 +168,8 @@ export default function Signup() {
           </div>
 
           <div className="text-xs text-gray-500 text-center">
-            Ao criar uma conta, você concorda com nossos termos de serviço e política de privacidade.
+            Ao criar uma conta, você concorda com nossos termos de serviço e política de privacidade.<br/>
+            <strong>Política de senhas:</strong> Senhas devem ter pelo menos 8 caracteres. Quando sua senha atingir o nível "Forte", você já pode prosseguir!
           </div>
         </form>
       </div>

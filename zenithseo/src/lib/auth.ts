@@ -1,5 +1,5 @@
-import { createSupabaseClient, createSupabaseServerClient } from './supabase'
-import { cookies } from 'next/headers'
+import { createSupabaseClient } from './supabase'
+import { validatePassword } from './password-validation'
 
 // Função para fazer login
 export async function signIn(email: string, password: string) {
@@ -19,6 +19,12 @@ export async function signIn(email: string, password: string) {
 
 // Função para fazer cadastro
 export async function signUp(email: string, password: string) {
+  // Validar senha no backend também
+  const passwordValidation = validatePassword(password)
+  if (!passwordValidation.isValid) {
+    throw new Error(`Senha não atende aos critérios de segurança: ${passwordValidation.errors.join(', ')}`)
+  }
+
   const supabase = createSupabaseClient()
   
   const { data, error } = await supabase.auth.signUp({
@@ -46,7 +52,7 @@ export async function signOut() {
 
 // Função para obter usuário atual no servidor
 export async function getCurrentUser() {
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseClient()
   
   const { data: { user }, error } = await supabase.auth.getUser()
 
@@ -65,7 +71,7 @@ export async function isAuthenticated() {
 
 // Função para obter dados do usuário do banco
 export async function getUserData(userId: string) {
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseClient()
   
   const { data, error } = await supabase
     .from('users')
