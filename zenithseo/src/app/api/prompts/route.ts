@@ -1,12 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
   try {
-    // Criar cliente Supabase com cookies
-    const cookieStore = cookies()
-    const supabase = createClient()
+    // Criar cliente Supabase com cookies do servidor
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {
+              // The `setAll` method was called from a Server Component.
+              // This can be ignored if you have middleware refreshing
+              // user sessions.
+            }
+          },
+        },
+      }
+    )
 
     // Obter usuário autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -18,7 +40,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Buscar prompts do usuário ordenados por data de criação (mais recentes primeiro)
+    // Verificar plano do usuário
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('plan')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Usuários gratuitos não têm acesso ao histórico
+    if (userData.plan === 'free') {
+      return NextResponse.json({
+        prompts: [],
+        total: 0,
+        message: 'Histórico de prompts disponível apenas no plano Pro'
+      })
+    }
+
+    // Buscar prompts do usuário ordenados por data de criação (mais recentes primeiro) - apenas para Pro
     const { data: prompts, error: promptsError } = await supabase
       .from('prompts')
       .select('*')

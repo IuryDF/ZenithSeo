@@ -10,9 +10,9 @@ export const FREE_PLAN = {
   name: 'Free',
   price: 0,
   features: [
-    '10 prompts por mês',
+    '3 prompts por conta',
     'Suporte básico',
-    'Histórico limitado'
+    'Sem histórico de prompts'
   ]
 }
 
@@ -22,7 +22,7 @@ export const PRO_PLAN = {
   features: [
     'Prompts ilimitados',
     'Suporte prioritário',
-    'Histórico completo',
+    'Histórico completo de prompts',
     'Novos recursos primeiro'
   ]
 }

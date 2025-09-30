@@ -124,7 +124,7 @@ src/
 ## 💳 Planos de Assinatura
 
 ### Plano Free
-- 10 prompts por mês
+- 3 prompts por conta
 - Acesso básico ao gerador
 - Histórico limitado
 

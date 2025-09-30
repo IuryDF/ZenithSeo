@@ -1,7 +1,8 @@
 import { createSupabaseClient } from './supabase'
 import { validatePassword } from './password-validation'
+import { createServerClient } from '@supabase/ssr'
 
-// Função para fazer login
+// Função para fazer login (client-side)
 export async function signIn(email: string, password: string) {
   const supabase = createSupabaseClient()
   
@@ -17,12 +18,12 @@ export async function signIn(email: string, password: string) {
   return data
 }
 
-// Função para fazer cadastro
+// Função para fazer cadastro (client-side)
 export async function signUp(email: string, password: string) {
-  // Validar senha no backend também
+  // Validar senha
   const passwordValidation = validatePassword(password)
   if (!passwordValidation.isValid) {
-    throw new Error(`Senha não atende aos critérios de segurança: ${passwordValidation.errors.join(', ')}`)
+    throw new Error(passwordValidation.errors.join(', '))
   }
 
   const supabase = createSupabaseClient()
@@ -30,6 +31,9 @@ export async function signUp(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
+    },
   })
 
   if (error) {
@@ -39,11 +43,43 @@ export async function signUp(email: string, password: string) {
   return data
 }
 
-// Função para fazer logout
+// Função para fazer logout (client-side)
 export async function signOut() {
   const supabase = createSupabaseClient()
   
   const { error } = await supabase.auth.signOut()
+  
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+// Função para redefinir senha (client-side)
+export async function resetPassword(email: string) {
+  const supabase = createSupabaseClient()
+  
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+// Função para atualizar senha (client-side)
+export async function updatePassword(password: string) {
+  // Validar senha
+  const passwordValidation = validatePassword(password)
+  if (!passwordValidation.isValid) {
+    throw new Error(passwordValidation.errors.join(', '))
+  }
+
+  const supabase = createSupabaseClient()
+  
+  const { error } = await supabase.auth.updateUser({
+    password,
+  })
 
   if (error) {
     throw new Error(error.message)
@@ -85,4 +121,44 @@ export async function getUserData(userId: string) {
   }
 
   return data
+}
+
+// Função para obter usuário autenticado no servidor (para API routes)
+export async function getServerUser() {
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  )
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  
+  if (authError || !user) {
+    return null
+  }
+
+  // Buscar dados do usuário no banco
+  const userData = await getUserData(user.id)
+  
+  return userData
 }

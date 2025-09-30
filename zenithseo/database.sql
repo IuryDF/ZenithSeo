@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email TEXT NOT NULL,
   plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro')),
+  stripe_customer_id TEXT UNIQUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

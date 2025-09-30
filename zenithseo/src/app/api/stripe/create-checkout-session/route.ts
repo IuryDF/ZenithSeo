@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
+import { createSupabaseServerClient } from '@/lib/supabase'
 import { createCheckoutSession } from '@/lib/stripe'
-import { createClient } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar cliente Supabase
-    const supabase = createClient()
+    const supabase = createSupabaseServerClient()
 
     // Verificar se o usuário existe
     const { data: userData, error: userError } = await supabase

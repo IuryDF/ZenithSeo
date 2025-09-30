@@ -1,12 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
   try {
-    // Criar cliente Supabase com cookies
-    const cookieStore = cookies()
-    const supabase = createClient()
+    // Criar cliente Supabase com cookies do servidor
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {
+              // The `setAll` method was called from a Server Component.
+              // This can be ignored if you have middleware refreshing
+              // user sessions.
+            }
+          },
+        },
+      }
+    )
 
     // Obter usuário autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -21,7 +43,7 @@ export async function GET(request: NextRequest) {
     // Buscar dados do usuário no banco
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('plan, stripe_customer_id')
+      .select('plan')
       .eq('id', user.id)
       .single()
 
@@ -36,21 +58,16 @@ export async function GET(request: NextRequest) {
     // Buscar dados de uso se for plano free
     let usage = null
     if (userData.plan === 'free') {
-      // Obter data do início do mês atual
-      const now = new Date()
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-
-      // Contar prompts gerados no mês atual
+      // Contar prompts totais do usuário (limite por conta)
       const { count, error: countError } = await supabase
         .from('prompts')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .gte('created_at', startOfMonth.toISOString())
 
       if (!countError) {
         usage = {
           prompts_generated: count || 0,
-          limit_reached: (count || 0) >= 10,
+          limit_reached: (count || 0) >= 3,
         }
       }
     }
@@ -58,7 +75,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       plan: userData.plan,
       usage,
-      hasStripeCustomer: !!userData.stripe_customer_id,
     })
 
   } catch (error) {

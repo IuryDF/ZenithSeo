@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase'
+import { headers } from 'next/headers'
+import { createSupabaseServerClient } from '@/lib/supabase'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-01-27.acacia',
 })
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -12,7 +12,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
-    const headersList = headers()
+    const headersList = await headers()
     const sig = headersList.get('stripe-signature')
 
     if (!sig) {
@@ -36,33 +36,42 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar cliente Supabase
-    const supabase = createClient()
+    const supabase = createSupabaseServerClient()
 
     // Processar diferentes tipos de eventos
     switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session
+      case 'customer.subscription.created': {
+        const subscription = event.data.object as Stripe.Subscription
+        
+        console.log('=== CUSTOMER SUBSCRIPTION CREATED ===')
+        console.log('Subscription ID:', subscription.id)
+        console.log('Customer:', subscription.customer)
+        console.log('Metadata:', subscription.metadata)
         
         // Obter userId dos metadados
-        const userId = session.metadata?.userId
+        const userId = subscription.metadata?.userId
         
         if (!userId) {
-          console.error('UserId não encontrado nos metadados da sessão')
+          console.error('UserId não encontrado nos metadados da subscription')
+          console.error('Metadados disponíveis:', subscription.metadata)
           return NextResponse.json(
             { error: 'UserId não encontrado' },
             { status: 400 }
           )
         }
 
+        console.log('Tentando atualizar usuário:', userId)
+
         // Atualizar plano do usuário para Pro
-        const { error: updateError } = await supabase
+        const { data: updateData, error: updateError } = await supabase
           .from('users')
           .update({ 
             plan: 'pro',
-            stripe_customer_id: session.customer as string,
+            stripe_customer_id: subscription.customer as string,
             updated_at: new Date().toISOString(),
           })
           .eq('id', userId)
+          .select()
 
         if (updateError) {
           console.error('Erro ao atualizar plano do usuário:', updateError)
@@ -72,6 +81,7 @@ export async function POST(request: NextRequest) {
           )
         }
 
+        console.log('Usuário atualizado com sucesso:', updateData)
         console.log(`Usuário ${userId} atualizado para plano Pro`)
         break
       }
