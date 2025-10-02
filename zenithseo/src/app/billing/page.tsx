@@ -138,16 +138,22 @@ export default function BillingPage() {
                   Dashboard
                 </Link>
                 <Link
+                  href="/metrics"
+                  className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                >
+                  Métricas
+                </Link>
+                <Link
                   href="/billing"
                   className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30"
                 >
                   Billing
                 </Link>
                 <Link
-                  href="/metrics"
+                  href="/support"
                   className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
                 >
-                  Métricas
+                  Suporte
                 </Link>
               </nav>
             </div>

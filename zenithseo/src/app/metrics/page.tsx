@@ -154,16 +154,22 @@ export default function MetricsPage() {
                   Dashboard
                 </Link>
                 <Link
+                  href="/metrics"
+                  className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30"
+                >
+                  Métricas
+                </Link>
+                <Link
                   href="/billing"
                   className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
                 >
                   Billing
                 </Link>
                 <Link
-                  href="/metrics"
-                  className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30"
+                  href="/support"
+                  className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
                 >
-                  Métricas
+                  Suporte
                 </Link>
               </nav>
             </div>

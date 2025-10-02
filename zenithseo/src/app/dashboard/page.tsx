@@ -154,16 +154,22 @@ export default function Dashboard() {
                   Dashboard
                 </Link>
                 <Link
+                  href="/metrics"
+                  className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                >
+                  Métricas
+                </Link>
+                <Link
                   href="/billing"
                   className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
                 >
                   Billing
                 </Link>
                 <Link
-                  href="/metrics"
+                  href="/support"
                   className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
                 >
-                  Métricas
+                  Suporte
                 </Link>
               </nav>
             </div>

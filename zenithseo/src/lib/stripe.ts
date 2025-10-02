@@ -2,7 +2,7 @@ import Stripe from 'stripe'
 
 // Configuração do cliente Stripe
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2022-11-15',
 })
 
 // Configuração dos planos
@@ -33,15 +33,17 @@ export async function createCheckoutSession({
   userId,
   successUrl,
   cancelUrl,
+  existingCustomerId,
 }: {
   customerEmail: string
   userId: string
   successUrl: string
   cancelUrl: string
+  existingCustomerId?: string | null
 }) {
   try {
-    const session = await stripe.checkout.sessions.create({
-      customer_email: customerEmail,
+    // Configuração base da sessão
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -70,11 +72,22 @@ export async function createCheckoutSession({
           userId,
         },
       },
-    })
+    }
+
+    // Se já existe um customer_id, reutilizar; senão, usar email
+    if (existingCustomerId) {
+      sessionConfig.customer = existingCustomerId
+      console.log('Reutilizando customer_id existente:', existingCustomerId)
+    } else {
+      sessionConfig.customer_email = customerEmail
+      console.log('Criando nova sessão com email:', customerEmail)
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return session
   } catch (error) {
     console.error('Erro ao criar sessão de checkout:', error)
-    throw new Error('Erro ao criar sessão de pagamento')
+    throw new Error('Erro ao processar pagamento. Tente novamente.')
   }
 }

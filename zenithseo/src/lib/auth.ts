@@ -12,7 +12,24 @@ export async function signIn(email: string, password: string) {
   })
 
   if (error) {
-    throw new Error(error.message)
+    // Traduzir mensagens de erro comuns do Supabase para português
+    let errorMessage = error.message
+    
+    if (error.message.includes('Invalid login credentials')) {
+      errorMessage = 'Credenciais de login inválidas'
+    } else if (error.message.includes('Email not confirmed')) {
+      errorMessage = 'Email não confirmado'
+    } else if (error.message.includes('Too many requests')) {
+      errorMessage = 'Muitas tentativas. Tente novamente mais tarde'
+    } else if (error.message.includes('User not found')) {
+      errorMessage = 'Usuário não encontrado'
+    } else if (error.message.includes('Invalid email')) {
+      errorMessage = 'Email inválido'
+    } else if (error.message.includes('Password')) {
+      errorMessage = 'Senha incorreta'
+    }
+    
+    throw new Error(errorMessage)
   }
 
   return data

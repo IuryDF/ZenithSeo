@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o usuário existe
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('email, plan')
+      .select('email, plan, stripe_customer_id')
       .eq('id', userId)
       .single()
 
@@ -41,12 +41,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Log para debug
+    console.log('=== CREATE CHECKOUT SESSION DEBUG ===')
+    console.log('User ID:', userId)
+    console.log('User Plan:', userData.plan)
+    console.log('User Email:', userData.email)
+    console.log('Stripe Customer ID:', userData.stripe_customer_id)
+
     // Criar sessão de checkout do Stripe
     const session = await createCheckoutSession({
       customerEmail: userData.email,
       userId,
       successUrl,
       cancelUrl,
+      existingCustomerId: userData.stripe_customer_id,
     })
 
     return NextResponse.json({

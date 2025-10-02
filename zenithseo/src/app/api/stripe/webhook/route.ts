@@ -4,8 +4,8 @@ import { headers } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-01-27.acacia',
-})
+  apiVersion: '2022-11-15',
+});
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
