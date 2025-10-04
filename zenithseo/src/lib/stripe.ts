@@ -1,9 +1,8 @@
 import Stripe from 'stripe'
 
 // Configuração do cliente Stripe
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2022-11-15',
-})
+// Usa versão padrão do pacote instalada para evitar conflitos de tipos/API
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 // Configuração dos planos
 export const FREE_PLAN = {

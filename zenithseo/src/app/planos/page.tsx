@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -14,12 +14,17 @@ interface UserData {
   }
 }
 
-export default function BillingPage() {
+export default function PlanosPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const headerScrollRef = useRef<HTMLDivElement | null>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) {
@@ -29,6 +34,84 @@ export default function BillingPage() {
 
     fetchUserData()
   }, [user, router])
+
+  // Confirmar checkout do Stripe ao retornar com session_id
+  useEffect(() => {
+    if (!user) return
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const success = params.get('success')
+      const sessionId = params.get('session_id')
+
+      if (success === 'true' && sessionId) {
+        setConfirming(true)
+        setConfirmError(null)
+        ;(async () => {
+          try {
+            const res = await fetch('/api/stripe/confirm-checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sessionId }),
+            })
+            const data = await res.json()
+            if (!res.ok) {
+              throw new Error(data.error || 'Erro ao confirmar pagamento')
+            }
+            // Atualizar dados do usuário após confirmação
+            await fetchUserData()
+          } catch (err: any) {
+            console.error('Erro ao confirmar checkout:', err)
+            setConfirmError(err?.message || 'Erro ao confirmar pagamento')
+          } finally {
+            setConfirming(false)
+            // Limpar parâmetros da URL
+            const url = new URL(window.location.href)
+            url.searchParams.delete('success')
+            url.searchParams.delete('session_id')
+            url.searchParams.delete('canceled')
+            window.history.replaceState({}, '', url.toString())
+          }
+        })()
+      }
+    } catch (e) {
+      // Ignorar erros de leitura de URL
+    }
+  }, [user])
+
+  // Controle de rolagem do header para mobile
+  useEffect(() => {
+    const el = headerScrollRef.current
+    if (!el) return
+
+    const updateScrollState = () => {
+      setCanScrollLeft(el.scrollLeft > 0)
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth)
+    }
+
+    updateScrollState()
+    const onScroll = () => updateScrollState()
+    const onResize = () => updateScrollState()
+    el.addEventListener('scroll', onScroll)
+    window.addEventListener('resize', onResize)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [headerScrollRef])
+
+  const scrollByDelta = (delta: number) => {
+    const el = headerScrollRef.current
+    if (!el) return
+    try {
+      if (typeof el.scrollBy === 'function') {
+        el.scrollBy({ left: delta, behavior: 'smooth' } as any)
+      } else {
+        el.scrollTo({ left: el.scrollLeft + delta, behavior: 'smooth' } as any)
+      }
+    } catch {
+      el.scrollLeft = el.scrollLeft + delta
+    }
+  }
 
   const fetchUserData = async () => {
     try {
@@ -61,8 +144,8 @@ export default function BillingPage() {
         },
         body: JSON.stringify({
           userId: user?.id,
-          successUrl: `${window.location.origin}/billing?success=true`,
-          cancelUrl: `${window.location.origin}/billing?canceled=true`,
+          successUrl: `${window.location.origin}/planos?success=true&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/planos?canceled=true`,
         }),
       })
 
@@ -127,10 +210,18 @@ export default function BillingPage() {
       {/* Header */}
       <header className="bg-gray-900/50 backdrop-blur-md border-b border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
+          <div ref={headerScrollRef} className="flex items-center py-4 overflow-x-scroll whitespace-nowrap scrollbar-x pb-2 md:overflow-x-visible md:whitespace-normal md:pb-0">
+            <button
+              disabled={!canScrollLeft}
+              className={`md:hidden text-gray-400 hover:text-white px-2 ${!canScrollLeft ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+              onClick={() => scrollByDelta(-180)}
+              aria-label="Scroll left"
+            >
+              ←
+            </button>
+            <div className="flex items-center space-x-8 shrink-0">
               <Logo size="md" showSubtitle={false} linkTo="/" />
-              <nav className="flex space-x-4">
+              <nav className="flex space-x-4 whitespace-nowrap w-max shrink-0 pr-2">
                 <Link
                   href="/dashboard"
                   className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
@@ -144,10 +235,10 @@ export default function BillingPage() {
                   Métricas
                 </Link>
                 <Link
-                  href="/billing"
+                  href="/planos"
                   className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30"
                 >
-                  Billing
+                  Planos
                 </Link>
                 <Link
                   href="/support"
@@ -157,7 +248,7 @@ export default function BillingPage() {
                 </Link>
               </nav>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-6 shrink-0">
               {/* Informações do Plano e Prompts */}
               {userData && (
                 <div className="flex items-center space-x-4">
@@ -184,11 +275,38 @@ export default function BillingPage() {
               </button>
             </div>
           </div>
+          {/* Seta direita visível no mobile fora do bloco de informações */}
+          <div className="flex items-center justify-end md:hidden">
+            <button
+              disabled={!canScrollRight}
+              className={`text-gray-400 hover:text-white px-2 ${!canScrollRight ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+              onClick={() => scrollByDelta(180)}
+              aria-label="Scroll right"
+            >
+              →
+            </button>
+          </div>
+        </div>
+        {/* Bloco mobile dentro do header: email e sair */}
+        <div className="md:hidden flex items-center justify-end px-4 sm:px-6 lg:px-8 py-2 gap-3">
+          <span className="text-gray-300 text-sm truncate max-w-[50vw]">Olá, {user.email}</span>
+          <button onClick={handleLogout} className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-full text-sm">Sair</button>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto pt-24 py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          {/* Banner de confirmação pós-checkout */}
+          {confirming && (
+            <div className="mb-4 bg-blue-900/40 border border-blue-700 text-blue-200 px-4 py-3 rounded-2xl">
+              Confirmando pagamento e ativando plano Pro...
+            </div>
+          )}
+          {confirmError && (
+            <div className="mb-4 bg-red-900/40 border border-red-700 text-red-200 px-4 py-3 rounded-2xl">
+              {confirmError}
+            </div>
+          )}
           {/* Status do Plano Atual */}
           <div className="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl p-6 shadow-2xl mb-8">
             <h3 className="text-lg leading-6 font-medium text-white mb-4">
@@ -309,12 +427,6 @@ export default function BillingPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="text-gray-300">Recursos avançados</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-gray-300">API access</span>
                   </li>
                 </ul>
                 {userData?.plan === 'pro' ? (

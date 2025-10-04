@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
@@ -24,6 +24,9 @@ export default function Dashboard() {
   const [newPrompts, setNewPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(false)
   const [userData, setUserData] = useState<UserData | null>(null)
+  const headerScrollRef = useRef<HTMLDivElement | null>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
   // Opções para os selects
   const niches = [
@@ -132,6 +135,40 @@ export default function Dashboard() {
     router.push('/')
   }
 
+  useEffect(() => {
+    const el = headerScrollRef.current
+    if (!el) return
+
+    const updateScrollState = () => {
+      setCanScrollLeft(el.scrollLeft > 0)
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth)
+    }
+
+    updateScrollState()
+    const onScroll = () => updateScrollState()
+    const onResize = () => updateScrollState()
+    el.addEventListener('scroll', onScroll)
+    window.addEventListener('resize', onResize)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [headerScrollRef])
+
+  const scrollByDelta = (delta: number) => {
+    const el = headerScrollRef.current
+    if (!el) return
+    try {
+      if (typeof el.scrollBy === 'function') {
+        el.scrollBy({ left: delta, behavior: 'smooth' } as any)
+      } else {
+        el.scrollTo({ left: el.scrollLeft + delta, behavior: 'smooth' } as any)
+      }
+    } catch {
+      el.scrollLeft = el.scrollLeft + delta
+    }
+  }
+
   if (!user) {
     return <div>Carregando...</div>
   }
@@ -143,10 +180,18 @@ export default function Dashboard() {
       {/* Header */}
       <header className="fixed top-0 w-full bg-gray-900/90 backdrop-blur-md border-b border-gray-700 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
+          <div className="flex items-center justify-between py-4">
+            <button
+              disabled={!canScrollLeft}
+              className={`md:hidden text-gray-400 hover:text-white px-2 ${!canScrollLeft ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+              onClick={() => scrollByDelta(-180)}
+              aria-label="Scroll left"
+            >
+              ←
+            </button>
+            <div ref={headerScrollRef} className="flex-1 min-w-0 flex items-center space-x-8 overflow-x-auto whitespace-nowrap scrollbar-x w-full md:overflow-x-visible md:whitespace-normal">
               <Logo size="md" showSubtitle={false} linkTo="/" />
-              <nav className="flex space-x-4">
+              <nav className="flex space-x-4 whitespace-nowrap w-max shrink-0 pr-2">
                 <Link
                   href="/dashboard"
                   className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30"
@@ -160,10 +205,10 @@ export default function Dashboard() {
                   Métricas
                 </Link>
                 <Link
-                  href="/billing"
+                  href="/planos"
                   className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
                 >
-                  Billing
+                  Planos
                 </Link>
                 <Link
                   href="/support"
@@ -173,7 +218,7 @@ export default function Dashboard() {
                 </Link>
               </nav>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-6 shrink-0">
               {/* Informações do Plano e Prompts */}
               {userData && (
                 <div className="flex items-center space-x-4">
@@ -199,6 +244,19 @@ export default function Dashboard() {
                 Sair
               </button>
             </div>
+            <button
+              disabled={!canScrollRight}
+              className={`md:hidden text-gray-400 hover:text-white px-2 ${!canScrollRight ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+              onClick={() => scrollByDelta(180)}
+              aria-label="Scroll right"
+            >
+              →
+            </button>
+          </div>
+          {/* Bloco mobile dentro do header: email e sair */}
+          <div className="md:hidden flex items-center justify-end px-4 sm:px-6 lg:px-8 py-2 gap-3">
+            <span className="text-gray-300 text-sm truncate max-w-[50vw]">Olá, {user.email}</span>
+            <button onClick={handleLogout} className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-full text-sm">Sair</button>
           </div>
         </div>
       </header>
@@ -240,7 +298,7 @@ export default function Dashboard() {
 
             {/* Histórico de Prompts - Apenas para usuários Pro */}
             {userData?.plan === 'pro' ? (
-              <PromptHistory prompts={prompts} />
+              <PromptHistory prompts={prompts} onDeleted={fetchPrompts} />
             ) : (
               <div className="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl p-6 shadow-2xl">
                 <h2 className="text-lg font-medium text-white mb-4">
@@ -256,7 +314,7 @@ export default function Dashboard() {
                   </p>
                   <div className="mt-4">
                     <Link
-                      href="/billing"
+                      href="/planos"
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                     >
                       Fazer Upgrade

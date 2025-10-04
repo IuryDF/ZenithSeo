@@ -45,11 +45,17 @@ export async function signUp(email: string, password: string) {
 
   const supabase = createSupabaseClient()
   
+  // Definir URL de redirecionamento após confirmar o email
+  // Em produção, use NEXT_PUBLIC_SITE_URL; em dev, usa window.location.origin
+  const baseSiteUrl = (typeof window !== 'undefined' && window.location?.origin) || ''
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || baseSiteUrl
+  const emailRedirectTo = `${configuredSiteUrl}/login`
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo,
     },
   })
 

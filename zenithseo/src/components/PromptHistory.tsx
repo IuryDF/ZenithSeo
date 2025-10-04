@@ -5,13 +5,53 @@ import { Prompt } from '@/lib/supabase'
 
 interface PromptHistoryProps {
   prompts: Prompt[]
+  onDeleted?: () => void
 }
 
-export default function PromptHistory({ prompts }: PromptHistoryProps) {
+export default function PromptHistory({ prompts, onDeleted }: PromptHistoryProps) {
   const [expandedPrompt, setExpandedPrompt] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [visibleCount, setVisibleCount] = useState<number>(5)
 
   const toggleExpanded = (promptId: string) => {
     setExpandedPrompt(expandedPrompt === promptId ? null : promptId)
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const selectAllVisible = () => {
+    const visibleIds = prompts.slice(0, visibleCount).map(p => p.id)
+    setSelectedIds(new Set(visibleIds))
+  }
+
+  const clearSelection = () => setSelectedIds(new Set())
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return
+    try {
+      const response = await fetch('/api/prompts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      })
+      const data = await response.json()
+      if (response.ok && data.success) {
+        clearSelection()
+        onDeleted?.()
+      } else {
+        alert(data.error || 'Erro ao excluir prompts')
+      }
+    } catch (err) {
+      console.error('Erro ao excluir:', err)
+      alert('Erro ao excluir prompts. Tente novamente.')
+    }
   }
 
   const copyToClipboard = async (text: string) => {
@@ -107,16 +147,37 @@ export default function PromptHistory({ prompts }: PromptHistoryProps) {
 
   return (
     <div className="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl p-6 shadow-2xl">
-      <h2 className="text-lg font-medium text-white mb-4">
-        Histórico de Prompts ({prompts.length})
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-medium text-white">Histórico de Prompts ({prompts.length})</h2>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={selectAllVisible}
+            className="inline-flex items-center px-3 py-1 border border-gray-600 shadow-sm text-xs font-medium rounded-lg text-gray-300 bg-gray-700/50 hover:bg-gray-600/50 transition-colors"
+          >
+            Selecionar 5 visíveis
+          </button>
+          <button
+            onClick={deleteSelected}
+            disabled={selectedIds.size === 0}
+            className={`inline-flex items-center px-3 py-1 border border-gray-600 shadow-sm text-xs font-medium rounded-lg ${selectedIds.size === 0 ? 'text-gray-500 bg-gray-700/30 cursor-not-allowed' : 'text-red-300 bg-gray-700/50 hover:bg-gray-600/50'}`}
+          >
+            Excluir selecionados
+          </button>
+        </div>
+      </div>
       
       <div className="space-y-4">
-        {prompts.map((prompt) => (
+        {prompts.slice(0, visibleCount).map((prompt) => (
           <div key={prompt.id} className="bg-gray-700/30 border border-gray-600 rounded-xl p-4">
             {/* Header do Prompt */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(prompt.id)}
+                  onChange={() => toggleSelect(prompt.id)}
+                  className="mr-2 w-4 h-4 rounded border-gray-500 bg-gray-700"
+                />
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
                   {getNicheLabel(prompt.niche)}
                 </span>
@@ -172,6 +233,17 @@ export default function PromptHistory({ prompts }: PromptHistoryProps) {
           </div>
         ))}
       </div>
+
+      {prompts.length > visibleCount && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setVisibleCount(c => c + 5)}
+            className="inline-flex items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-lg text-blue-300 bg-gray-700/50 hover:bg-gray-600/50 transition-colors"
+          >
+            Ver mais
+          </button>
+        </div>
+      )}
     </div>
   )
 }

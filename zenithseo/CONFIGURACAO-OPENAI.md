@@ -11,7 +11,7 @@ Seu sistema agora possui **prompts ultra-técnicos** e **diferenciação clara**
 - **Recursos**: SEO básico, copywriting eficaz, estrutura clara
 
 ### **💎 Plano PRO (Com API)**
-- **Modelo**: GPT-4o (mais inteligente) 
+- **Modelo**: GPT-5 mini (mais capaz, custo moderado) 
 - **Variações**: 5 prompts ultra-técnicos por geração
 - **Qualidade**: Prompts profissionais com 200-300 palavras
 - **Recursos**: Neuromarketing, growth hacking, frameworks avançados
@@ -38,9 +38,11 @@ Seu sistema agora possui **prompts ultra-técnicos** e **diferenciação clara**
 
 ### **Passo 4: Configurar no Projeto**
 1. Abra o arquivo `.env.local` na raiz do projeto
-2. Adicione ou atualize a linha:
+2. Adicione ou atualize as linhas:
 ```bash
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+OPENAI_MODEL_FREE=gpt-5-nano
+OPENAI_MODEL_PRO=gpt-5-mini
 ```
 3. Reinicie o servidor: `npm run dev`
 
@@ -48,12 +50,12 @@ OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ## 💰 **Custos Estimados**
 
-### **Modelo GPT-4o-mini (FREE)**
-- **Custo**: ~$0.15 por 1M tokens de entrada
+### **Modelo GPT-5 nano (FREE)**
+ - **Custo**: mais barato para tarefas comuns
 - **Uso estimado**: 100 gerações/mês = ~$2-5/mês
 
-### **Modelo GPT-4o (PRO)**  
-- **Custo**: ~$2.50 por 1M tokens de entrada
+### **Modelo GPT-5 mini (PRO)**  
+ - **Custo**: moderado, com melhor qualidade/latência
 - **Uso estimado**: 500 gerações/mês = ~$15-25/mês
 
 ### **💡 Dica de Economia**
@@ -68,7 +70,7 @@ OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ### **Como Funciona Atualmente:**
 
 1. **Sem API configurada**: Sistema usa templates offline robustos
-2. **Com API ativa**: Usa GPT-4o-mini (Free) ou GPT-4o (Pro)
+2. **Com API ativa**: Usa GPT-5 nano (Free) ou GPT-5 mini (Pro)
 3. **API com erro**: Automaticamente volta para templates offline
 4. **Créditos esgotados**: 
    - **Free**: Força upgrade para Pro
@@ -97,7 +99,7 @@ REQUISITOS TÉCNICOS:
 ...
 ```
 
-### **Exemplo PRO (GPT-4o):**
+### **Exemplo PRO (GPT-5 mini):**
 ```
 BRIEFING ULTRA-TÉCNICO: Crie um artigo SEO PREMIUM sobre "E-commerce" com foco estratégico em aumentar conversões.
 
@@ -124,7 +126,7 @@ ESPECIFICAÇÕES OBRIGATÓRIAS:
 
 ### **Para Ativar API:**
 1. Siga os passos de configuração acima
-2. Adicione a `OPENAI_API_KEY` no `.env.local`
+2. Adicione `OPENAI_API_KEY` e (opcional) `OPENAI_MODEL_FREE` e `OPENAI_MODEL_PRO` no `.env.local`
 3. Reinicie o servidor
 4. Teste a geração com IA real
 

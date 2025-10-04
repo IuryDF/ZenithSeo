@@ -45,7 +45,7 @@ O ZenithSEO inclui templates HTML personalizados e profissionais para:
 3. **Importante**: Mantenha as variáveis do Supabase:
    - `{{ .ConfirmationURL }}` - Link de confirmação
    - `{{ .Email }}` - Email do usuário
-   - `{{ .SiteURL }}` - URL do site (se necessário)
+   - `{{ .SiteURL }}` - URL do site (definida em Authentication > URL Configuration)
 
 ### Passo 4: Configurar Template de Recuperação de Senha
 1. Clique em **Reset password**
@@ -60,7 +60,14 @@ O ZenithSEO inclui templates HTML personalizados e profissionais para:
    - **From name**: `ZenithSEO`
 2. Se não tiver SMTP próprio, pode usar o padrão do Supabase
 
-### Passo 6: Testar os Templates
+### Passo 6: Configurar URLs de Redirecionamento
+1. Em **Authentication > URL Configuration**, defina:
+   - **Site URL**: a URL pública do seu app (ex: `https://zenithseo.com`)
+   - **Additional Redirect URLs**: inclua `https://zenithseo.com/login` e a URL de desenvolvimento `http://localhost:3002/login` (ajuste porta conforme seu projeto)
+2. No ambiente de produção, configure a variável `NEXT_PUBLIC_SITE_URL` com a mesma URL pública do app.
+3. O sistema utiliza essa URL para construir `emailRedirectTo` do Supabase e direcionar para `/login` após confirmação.
+
+### Passo 7: Testar os Templates
 1. Salve as configurações
 2. Teste criando uma nova conta
 3. Teste a recuperação de senha
@@ -71,13 +78,13 @@ O ZenithSEO inclui templates HTML personalizados e profissionais para:
 ### Para Confirmação de Cadastro:
 - `{{ .ConfirmationURL }}` - URL para confirmar a conta
 - `{{ .Email }}` - Email do usuário
-- `{{ .SiteURL }}` - URL base do site
+- `{{ .SiteURL }}` - URL base do site (definida no Supabase)
 - `{{ .Token }}` - Token de confirmação (se necessário)
 
 ### Para Recuperação de Senha:
 - `{{ .ConfirmationURL }}` - URL para redefinir senha
 - `{{ .Email }}` - Email do usuário
-- `{{ .SiteURL }}` - URL base do site
+- `{{ .SiteURL }}` - URL base do site (definida no Supabase)
 - `{{ .Token }}` - Token de recuperação (se necessário)
 
 ## 🎨 Personalização Adicional

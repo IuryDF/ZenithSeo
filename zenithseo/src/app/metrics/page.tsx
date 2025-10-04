@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -41,6 +41,9 @@ interface UserData {
 export default function MetricsPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const headerScrollRef = useRef<HTMLDivElement | null>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -130,6 +133,40 @@ export default function MetricsPage() {
     }
   }
 
+  useEffect(() => {
+    const el = headerScrollRef.current
+    if (!el) return
+
+    const updateScrollState = () => {
+      setCanScrollLeft(el.scrollLeft > 0)
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth)
+    }
+
+    updateScrollState()
+    const onScroll = () => updateScrollState()
+    const onResize = () => updateScrollState()
+    el.addEventListener('scroll', onScroll)
+    window.addEventListener('resize', onResize)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [headerScrollRef])
+
+  const scrollByDelta = (delta: number) => {
+    const el = headerScrollRef.current
+    if (!el) return
+    try {
+      if (typeof el.scrollBy === 'function') {
+        el.scrollBy({ left: delta, behavior: 'smooth' } as any)
+      } else {
+        el.scrollTo({ left: el.scrollLeft + delta, behavior: 'smooth' } as any)
+      }
+    } catch {
+      el.scrollLeft = el.scrollLeft + delta
+    }
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
@@ -143,62 +180,56 @@ export default function MetricsPage() {
       {/* Header */}
       <header className="bg-gray-900/50 backdrop-blur-md border-b border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
+          <div className="flex items-center justify-between py-4">
+            <button
+              disabled={!canScrollLeft}
+              className={`md:hidden text-gray-400 hover:text-white px-2 ${!canScrollLeft ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+              onClick={() => scrollByDelta(-180)}
+              aria-label="Scroll left"
+            >
+              ←
+            </button>
+            <div
+              ref={headerScrollRef}
+              className="flex-1 min-w-0 flex items-center space-x-8 overflow-x-auto whitespace-nowrap scrollbar-x w-full md:overflow-x-visible md:whitespace-normal"
+            >
               <Logo size="md" showSubtitle={false} linkTo="/" />
-              <nav className="flex space-x-4">
-                <Link
-                  href="/dashboard"
-                  className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/metrics"
-                  className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30"
-                >
-                  Métricas
-                </Link>
-                <Link
-                  href="/billing"
-                  className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                >
-                  Billing
-                </Link>
-                <Link
-                  href="/support"
-                  className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                >
-                  Suporte
-                </Link>
+              <nav className="flex space-x-4 whitespace-nowrap w-max shrink-0 pr-2">
+                <Link href="/dashboard" className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Dashboard</Link>
+                <Link href="/metrics" className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-400 px-4 py-2 rounded-full text-sm font-medium border border-blue-500/30">Métricas</Link>
+                <Link href="/planos" className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Planos</Link>
+                <Link href="/support" className="text-gray-300 hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Suporte</Link>
               </nav>
             </div>
-            <div className="flex items-center space-x-6">
-              {/* Informações do Plano e Prompts */}
+            <div className="hidden md:flex items-center space-x-6 shrink-0">
               {userData && (
                 <div className="flex items-center space-x-4">
                   <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-full px-4 py-2">
                     <span className="text-sm text-gray-300">Plano: </span>
-                    <span className={`text-sm font-semibold ${userData.plan === 'pro' ? 'text-purple-400' : 'text-blue-400'}`}>
-                      {userData.plan === 'pro' ? 'Pro' : 'Free'}
-                    </span>
+                    <span className={`text-sm font-semibold ${userData.plan === 'pro' ? 'text-purple-400' : 'text-blue-400'}`}>{userData.plan === 'pro' ? 'Pro' : 'Free'}</span>
                   </div>
                   <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-full px-4 py-2">
                     <span className="text-sm text-gray-300">Prompts: </span>
-                    <span className="text-sm font-semibold text-green-400">
-                      {userData.plan === 'pro' ? 'Ilimitado' : `${Math.max(0, 3 - (userData.usage?.prompts_generated || 0))}/3`}
-                    </span>
+                    <span className="text-sm font-semibold text-green-400">{userData.plan === 'pro' ? 'Ilimitado' : `${Math.max(0, 3 - (userData.usage?.prompts_generated || 0))}/3`}</span>
                   </div>
                 </div>
               )}
               <span className="text-gray-300">Olá, {user.email}</span>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-full transition-colors"
-              >
-                Sair
-              </button>
+              <button onClick={handleLogout} className="bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-full transition-colors">Sair</button>
             </div>
+            <button
+              disabled={!canScrollRight}
+              className={`md:hidden text-gray-400 hover:text-white px-2 ${!canScrollRight ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+              onClick={() => scrollByDelta(180)}
+              aria-label="Scroll right"
+            >
+              →
+            </button>
+          </div>
+          {/* Bloco mobile: email e sair */}
+          <div className="md:hidden flex items-center justify-end py-2 gap-3">
+            <span className="text-gray-300 text-sm truncate max-w-[50vw]">Olá, {user.email}</span>
+            <button onClick={handleLogout} className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-full text-sm">Sair</button>
           </div>
         </div>
       </header>

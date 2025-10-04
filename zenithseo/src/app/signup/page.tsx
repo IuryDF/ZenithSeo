@@ -27,6 +27,14 @@ export default function Signup() {
     setLoading(true)
     setError('')
 
+    // Validação de email com mensagem em português
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Por favor, insira um email válido (ex.: seu@email.com)')
+      setLoading(false)
+      return
+    }
+
     // Validar se as senhas coincidem
     if (password !== confirmPassword) {
       setError('As senhas não coincidem')
@@ -43,13 +51,51 @@ export default function Signup() {
     }
 
     try {
+      // Pré-verificar se já existe conta com este email
+      try {
+        const resp = await fetch('/api/auth/check-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        })
+        if (resp.ok) {
+          const json = await resp.json()
+          if (json.exists) {
+            // Redireciona direto para login com aviso
+            router.push(`/login?existingEmail=${encodeURIComponent(email)}`)
+            return
+          }
+        }
+      } catch (checkErr) {
+        // Silencioso: se falhar a verificação, continua com signUp para capturar erro
+        console.warn('Falha ao verificar email existente, prosseguindo com cadastro')
+      }
+
       await signUp(email, password)
       setSuccess(true)
       setTimeout(() => {
         router.push('/login')
       }, 2000)
     } catch (err: any) {
-      setError(err.message || 'Erro ao criar conta')
+      const message = (err?.message || '').toLowerCase()
+      const duplicatePatterns = [
+        'already registered',
+        'user already exists',
+        'already exists',
+        'duplicate'
+      ]
+      const isDuplicateEmail = duplicatePatterns.some(p => message.includes(p))
+
+      if (isDuplicateEmail) {
+        // Redirecionar para login e informar que já existe conta com este email
+        router.push(`/login?existingEmail=${encodeURIComponent(email)}`)
+      } else {
+        // Garantir mensagens em português
+        if (message.includes('invalid email')) setError('Email inválido')
+        else if (message.includes('password')) setError('Senha inválida ou muito fraca')
+        else if (message.includes('too many requests')) setError('Muitas tentativas. Tente novamente mais tarde')
+        else setError(err.message || 'Erro ao criar conta')
+      }
     } finally {
       setLoading(false)
     }
@@ -90,7 +136,7 @@ export default function Signup() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Logo size="md" showSubtitle={true} linkTo="/" />
-            <nav className="flex items-center space-x-6">
+            <nav className="flex items-center space-x-6 overflow-x-scroll md:overflow-x-hidden whitespace-nowrap scrollbar-x w-max shrink-0 max-w-[70vw] md:max-w-none pr-2 pb-2 md:pb-0">
               <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                 Início
               </Link>
@@ -121,7 +167,7 @@ export default function Signup() {
               </p>
             </div>
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                   Email

@@ -41,16 +41,6 @@ export default function Home() {
                 Por que escolher ZenithSEO?
               </a>
               <a 
-                href="#suporte" 
-                className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 text-white hover:text-white hover:from-blue-600/20 hover:to-purple-600/20 px-3 py-1.5 rounded-full transition-all duration-300 cursor-pointer font-medium border border-blue-500/20 hover:border-blue-400/40 text-sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('suporte')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Central de suporte
-              </a>
-              <a 
                 href="#precos" 
                 className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 text-white hover:text-white hover:from-blue-600/20 hover:to-purple-600/20 px-3 py-1.5 rounded-full transition-all duration-300 cursor-pointer font-medium border border-blue-500/20 hover:border-blue-400/40 text-sm"
                 onClick={(e) => {
@@ -58,7 +48,17 @@ export default function Home() {
                   document.getElementById('precos')?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
-                Preços
+                Planos
+              </a>
+              <a 
+                href="#suporte" 
+                className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 text-white hover:text-white hover:from-blue-600/20 hover:to-purple-600/20 px-3 py-1.5 rounded-full transition-all duration-300 cursor-pointer font-medium border border-blue-500/20 hover:border-blue-400/40 text-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('suporte')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Suporte técnico
               </a>
             </nav>
 
@@ -167,14 +167,20 @@ export default function Home() {
                   <div className="bg-gray-900/50 rounded-lg p-4">
                     <div className="text-gray-300 text-sm mb-2">Objetivo:</div>
                     <div className="bg-gray-700/50 rounded-lg p-3 text-white">
-                      Criar artigo de blog sobre "SEO para e-commerce"
+                      Quero um briefing SEO para meu e-commerce, com títulos e sugestões de links internos.
                     </div>
                   </div>
                   
                   <div className="bg-gray-900/50 rounded-lg p-4">
-                    <div className="text-gray-300 text-sm mb-2">Palavras-chave:</div>
-                    <div className="bg-gray-700/50 rounded-lg p-3 text-white">
-                      SEO e-commerce, otimização loja online, vendas orgânicas
+                    <div className="text-gray-300 text-sm mb-2">Entradas:</div>
+                    <div 
+                      className="bg-gray-700/50 rounded-lg p-3 text-white"
+                      style={{
+                        maskImage: 'linear-gradient(to right, black 72%, transparent)',
+                        WebkitMaskImage: 'linear-gradient(to right, black 72%, transparent)'
+                      }}
+                    >
+                      Minha loja é de tênis de corrida; quero um tom direto para iniciantes e dicas práticas de SEO.
                     </div>
                   </div>
                   
@@ -193,9 +199,22 @@ export default function Home() {
                   
                   {/* Resultado Simulado */}
                   <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-lg p-4 animate-pulse">
-                    <div className="text-blue-300 text-sm mb-2">✅ Prompt Gerado:</div>
-                    <div className="text-gray-300 text-sm leading-relaxed">
-                      "Crie um artigo completo sobre SEO para e-commerce, focando em otimização de produtos, estrutura de URLs, meta descriptions para páginas de categoria..."
+                    <div className="text-blue-300 text-sm mb-2">
+                      ✅ Prompt técnico gerado:
+                      <span
+                        className="ml-1 text-white/90"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        "Produza um briefing SEO para e-commerce incluindo H1, H2/H3, entidades e schema Article. Inclua recomendações de links internos e exemplos de URLs..."
+                      </span>
+                    </div>
+                    <div className="sr-only">
+                      "Produza um briefing SEO para e-commerce incluindo: 1) H1 único com variação semântica; 2) H2/H3 cobrindo produtos, categorias e navegação; 3) entidades nomeadas (Produto, Categoria, Marca); 4) esboço de schema.org Article com FAQ; 5) recomendações de internal linking para PLPs e PDPs; 6) lista de anchors otimizados; 7) exemplos de permalinks e breadcrumbs; 8) tabela de metas (title 60c, description 155c)."
                     </div>
                   </div>
                 </div>
@@ -208,6 +227,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      
 
       {/* Como Funciona */}
       <section id="como-funciona" className="py-20">
@@ -402,84 +423,12 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Logos das empresas */}
-          <div className="text-center">
-            <p className="text-gray-400 mb-8">Usado por profissionais de empresas como:</p>
-            <div className="flex justify-center items-center space-x-12 opacity-60">
-              <div className="text-2xl font-bold text-gray-500">TechStart</div>
-              <div className="text-2xl font-bold text-gray-500">Growth Agency</div>
-              <div className="text-2xl font-bold text-gray-500">E-commerce Plus</div>
-              <div className="text-2xl font-bold text-gray-500">Digital Pro</div>
-            </div>
-          </div>
+          
         </div>
       </section>
 
-      {/* Seção de Suporte com Abas */}
-      <section id="suporte" className="py-20 bg-gray-900/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Central de Suporte
-            </h2>
-            <p className="text-xl text-gray-300">
-              Encontre respostas rápidas para suas dúvidas
-            </p>
-          </div>
-          
-          <div className="max-w-4xl mx-auto">
-            {/* Abas de Navegação */}
-            <div className="flex flex-wrap justify-center mb-8 bg-gray-800/50 rounded-xl p-2">
-              <button className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium transition-all duration-300">
-                FAQ
-              </button>
-              <button className="px-6 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700/50 font-medium transition-all duration-300">
-                Tutoriais
-              </button>
-              <button className="px-6 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700/50 font-medium transition-all duration-300">
-                Contato
-              </button>
-              <button className="px-6 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700/50 font-medium transition-all duration-300">
-                Status
-              </button>
-            </div>
-            
-            {/* Conteúdo das Abas - FAQ */}
-            <div className="bg-gray-800/60 rounded-2xl p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="bg-gray-700/50 rounded-lg p-4 hover:bg-gray-700/70 transition-colors cursor-pointer">
-                    <h3 className="font-semibold text-white mb-2">Como começar a usar?</h3>
-                    <p className="text-gray-300 text-sm">Guia completo para seus primeiros passos na plataforma</p>
-                  </div>
-                  <div className="bg-gray-700/50 rounded-lg p-4 hover:bg-gray-700/70 transition-colors cursor-pointer">
-                    <h3 className="font-semibold text-white mb-2">Quantos prompts posso gerar?</h3>
-                    <p className="text-gray-300 text-sm">Limites e funcionalidades de cada plano</p>
-                  </div>
-                  <div className="bg-gray-700/50 rounded-lg p-4 hover:bg-gray-700/70 transition-colors cursor-pointer">
-                    <h3 className="font-semibold text-white mb-2">Como cancelar minha assinatura?</h3>
-                    <p className="text-gray-300 text-sm">Processo simples de cancelamento</p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="bg-gray-700/50 rounded-lg p-4 hover:bg-gray-700/70 transition-colors cursor-pointer">
-                    <h3 className="font-semibold text-white mb-2">Posso exportar meus prompts?</h3>
-                    <p className="text-gray-300 text-sm">Opções de exportação e formatos disponíveis</p>
-                  </div>
-                  <div className="bg-gray-700/50 rounded-lg p-4 hover:bg-gray-700/70 transition-colors cursor-pointer">
-                    <h3 className="font-semibold text-white mb-2">Há suporte técnico?</h3>
-                    <p className="text-gray-300 text-sm">Canais de atendimento e horários</p>
-                  </div>
-                  <div className="bg-gray-700/50 rounded-lg p-4 hover:bg-gray-700/70 transition-colors cursor-pointer">
-                    <h3 className="font-semibold text-white mb-2">Posso usar para fins comerciais?</h3>
-                    <p className="text-gray-300 text-sm">Licenças e termos de uso comercial</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      
+
 
       {/* Preços */}
       <section id="precos" className="py-20">
@@ -518,17 +467,31 @@ export default function Home() {
                   </svg>
                   3 variações por prompt
                 </li>
+                
+                
                 <li className="flex items-center text-gray-300">
                   <svg className="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Sem histórico de prompts
+                  Histórico completo de prompts
                 </li>
                 <li className="flex items-center text-gray-300">
-                  <svg className="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg className="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Suporte por email
+                  Prompts premium
+                </li>
+                <li className="flex items-center text-gray-300">
+                  <svg className="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Suporte prioritário
+                </li>
+                <li className="flex items-center text-gray-300">
+                  <svg className="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Métricas de performance
                 </li>
               </ul>
               
@@ -551,7 +514,7 @@ export default function Home() {
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-white mb-2">Pro</h3>
                 <div className="text-4xl font-bold text-white mb-2">
-                  R$ 29
+                  R$ 29,99
                   <span className="text-lg font-normal text-gray-400">/mês</span>
                 </div>
                 <p className="text-gray-300">Para profissionais sérios</p>
@@ -607,6 +570,35 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Suporte técnico */}
+      <section id="suporte" className="py-24 bg-gray-900/40 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+              Suporte técnico
+            </h2>
+            <p className="mt-4 text-gray-300 max-w-2xl mx-auto">
+              Precisa de ajuda? Abra um ticket e nossa equipe responderá o mais rápido possível. Suporte disponível para todos os planos.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <Link
+              href="/support"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 font-medium text-base transform hover:scale-105"
+            >
+              Abrir ticket de suporte
+            </Link>
+            <Link
+              href="/support"
+              className="bg-gray-800 text-white px-8 py-3 rounded-full border border-gray-700 hover:bg-gray-700 transition-all duration-300 font-medium text-base"
+            >
+              Ver central de suporte
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 border-t border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -634,6 +626,16 @@ export default function Home() {
                   Como funciona
                 </a>
                 <a 
+                  href="#por-que-escolher" 
+                  className="block text-gray-400 hover:text-white transition-colors text-sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('por-que-escolher')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Por que escolher ZenithSEO?
+                </a>
+                <a 
                   href="#precos" 
                   className="block text-gray-400 hover:text-white transition-colors text-sm"
                   onClick={(e) => {
@@ -641,7 +643,17 @@ export default function Home() {
                     document.getElementById('precos')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
-                  Preços
+                  Planos
+                </a>
+                <a 
+                  href="#suporte" 
+                  className="block text-gray-400 hover:text-white transition-colors text-sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('suporte')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Suporte técnico
                 </a>
               </div>
             </div>
@@ -650,15 +662,15 @@ export default function Home() {
             <div className="space-y-4">
               <h4 className="text-white font-semibold">Suporte</h4>
               <div className="space-y-2">
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">
-                  Central de ajuda
-                </a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">
+                <Link href="/support" className="block text-gray-400 hover:text-white transition-colors text-sm">
+                  Central de suporte
+                </Link>
+                <Link href="/support" className="block text-gray-400 hover:text-white transition-colors text-sm">
                   Contato
-                </a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">
+                </Link>
+                <Link href="/privacy" className="block text-gray-400 hover:text-white transition-colors text-sm">
                   Política de privacidade
-                </a>
+                </Link>
               </div>
             </div>
           </div>

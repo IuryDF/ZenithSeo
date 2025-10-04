@@ -9,24 +9,41 @@ const openai = new OpenAI({
 })
 
 // Função para gerar prompts usando OpenAI
-async function generatePrompts(niche: string, objective: string, type: string, userPlan: string): Promise<string[]> {
+async function generatePrompts(
+  niche: string,
+  objective: string,
+  type: string,
+  userPlan: string,
+  extras?: {
+    customNiche?: string
+    targetAudience?: string
+    companyName?: string
+    additionalInfo?: string
+  }
+): Promise<string[]> {
   // Configuração baseada no plano do usuário
   const modelConfig = {
     free: {
-      model: "gpt-4o-mini",
-      maxTokens: 1500,
+      // Configurável via .env; usar modelos recentes/gratuitos ou de baixo custo
+      model: process.env.OPENAI_MODEL_FREE || process.env.NEXT_PUBLIC_OPENAI_MODEL_FREE || "gpt-4o-mini",
+      maxTokens: 2000,
       temperature: 0.6,
-      variations: 3
+      variations: 1
     },
     pro: {
-      model: "gpt-4o",
-      maxTokens: 2500,
+      // Configurável via .env; usar modelos recentes/capazes
+      model: process.env.OPENAI_MODEL_PRO || process.env.NEXT_PUBLIC_OPENAI_MODEL_PRO || "gpt-4.1",
+      maxTokens: undefined as number | undefined, // Sem limite explícito
       temperature: 0.5,
-      variations: 5
+      variations: 1
     }
   }
 
   const config = modelConfig[userPlan as keyof typeof modelConfig] || modelConfig.free
+
+  const effectiveNiche = (extras?.customNiche && extras.customNiche.trim().length > 0)
+    ? extras.customNiche.trim()
+    : niche
 
   // Sistema de prompts ultra-técnicos baseado no plano
   const systemPrompt = userPlan === 'pro' 
@@ -52,13 +69,31 @@ EXPERTISE:
 
 MISSÃO: Criar prompts ROBUSTOS e TÉCNICOS que gerem resultados de alta qualidade quando executados por IAs.`
 
+  const proProjectData = [
+    `• Nicho/Vertical: ${effectiveNiche}`,
+    extras?.customNiche && extras.customNiche.trim() ? `• Nicho selecionado: ${niche}` : '',
+    `• Objetivo Estratégico: ${objective}`,
+    `• Formato de Conteúdo: ${type}`,
+    extras?.targetAudience && extras.targetAudience.trim() ? `• Público-alvo: ${extras.targetAudience.trim()}` : '',
+    extras?.companyName && extras.companyName.trim() ? `• Empresa/Marca: ${extras.companyName.trim()}` : '',
+    extras?.additionalInfo && extras.additionalInfo.trim() ? `• Informações adicionais: ${extras.additionalInfo.trim()}` : ''
+  ].filter(Boolean).join('\n')
+
+  const freeProjectData = [
+    `• Nicho: ${effectiveNiche}`,
+    extras?.customNiche && extras.customNiche.trim() ? `• Nicho selecionado: ${niche}` : '',
+    `• Objetivo: ${objective}`,
+    `• Tipo de Conteúdo: ${type}`,
+    extras?.targetAudience && extras.targetAudience.trim() ? `• Público-alvo: ${extras.targetAudience.trim()}` : '',
+    extras?.companyName && extras.companyName.trim() ? `• Empresa/Marca: ${extras.companyName.trim()}` : '',
+    extras?.additionalInfo && extras.additionalInfo.trim() ? `• Informações adicionais: ${extras.additionalInfo.trim()}` : ''
+  ].filter(Boolean).join('\n')
+
   const userPrompt = userPlan === 'pro'
-    ? `BRIEFING ULTRA-TÉCNICO PARA GERAÇÃO DE PROMPTS PROFISSIONAIS:
+    ? `BRIEFING ULTRA-TÉCNICO PARA GERAÇÃO DE UM ÚNICO MEGA PROMPT PROFISSIONAL:
 
 📊 DADOS DO PROJETO:
-• Nicho/Vertical: ${niche}
-• Objetivo Estratégico: ${objective}  
-• Formato de Conteúdo: ${type}
+${proProjectData}
 
 🎯 ESPECIFICAÇÕES TÉCNICAS OBRIGATÓRIAS:
 
@@ -84,16 +119,14 @@ Para cada prompt, você DEVE incluir:
 - Aplicação de neuromarketing
 
 📈 RESULTADO ESPERADO:
-${config.variations} prompts ULTRA-TÉCNICOS que, quando executados por qualquer IA, produzam conteúdo de nível PROFISSIONAL SÊNIOR, com alta taxa de conversão e engajamento.
+1 MEGA PROMPT ULTRA-TÉCNICO que combine o MELHOR de múltiplas abordagens (conteúdo e técnicas) em um único prompt robusto, completo e otimizado para IAs avançadas. Sem limite de caracteres; gere o melhor possível.
 
-IMPORTANTE: Retorne APENAS os prompts, um por linha, sem numeração ou formatação adicional.`
+IMPORTANTE: Retorne APENAS UM PROMPT único, completo, em texto contínuo.`
 
-    : `BRIEFING TÉCNICO PARA GERAÇÃO DE PROMPTS:
+    : `BRIEFING TÉCNICO PARA GERAÇÃO DE UM ÚNICO PROMPT:
 
 📊 INFORMAÇÕES DO PROJETO:
-• Nicho: ${niche}
-• Objetivo: ${objective}
-• Tipo de Conteúdo: ${type}
+${freeProjectData}
 
 🎯 REQUISITOS TÉCNICOS:
 
@@ -117,39 +150,31 @@ RESULTADO: ${config.variations} prompts ROBUSTOS que gerem conteúdo de alta qua
 Retorne apenas os prompts, um por linha, sem numeração ou formatação adicional.`
 
   try {
-    const completion = await openai.chat.completions.create({
+    // Usar Responses API (mais recente). Concatenar system + user no input.
+    const requestParams: any = {
       model: config.model,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: userPrompt
-        }
-      ],
-      max_tokens: config.maxTokens,
+      input: `${systemPrompt}\n\n${userPrompt}`,
       temperature: config.temperature,
-    })
+    }
+    if (typeof config.maxTokens === 'number' && config.maxTokens > 0) {
+      requestParams.max_output_tokens = config.maxTokens
+    }
+    const completion = await openai.responses.create(requestParams)
 
-    const content = completion.choices[0]?.message?.content
+    // Extrair texto de saída de forma resiliente
+    const outputText: string | undefined = (completion as any)?.output_text
+    const content = outputText || (completion as any)?.choices?.[0]?.message?.content
     if (!content) {
       throw new Error('Nenhum conteúdo retornado pela OpenAI')
     }
 
-    // Dividir o conteúdo em linhas e filtrar linhas vazias
-    const prompts = content
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .slice(0, config.variations) // Usar número de variações baseado no plano
-
-    if (prompts.length === 0) {
+    // Retornar um único prompt consolidado
+    const singlePrompt = content.trim()
+    if (!singlePrompt || singlePrompt.length === 0) {
       throw new Error('Nenhum prompt válido foi gerado')
     }
 
-    return prompts
+    return [singlePrompt]
   } catch (error: any) {
     console.error('Erro ao gerar prompts com OpenAI:', error)
     
@@ -160,7 +185,7 @@ Retorne apenas os prompts, um por linha, sem numeração ou formatação adicion
         error?.status === 503 ||
         error?.error?.code === 'insufficient_quota' ||
         error?.error?.code === 'invalid_api_key' ||
-        (error?.message && (error.message.includes('insufficient_quota') || error.message.includes('invalid_api_key')))
+        (error?.message && (error.message.includes('insufficient_quota') || error.message.includes('invalid_api_key') || error.message.includes('model') || error.message.includes('Unsupported')))
 
     if (isQuotaError) {
       console.log('Erro de créditos OpenAI detectado:', error?.code || error?.status || 'API error')
@@ -184,6 +209,19 @@ Retorne apenas os prompts, um por linha, sem numeração ou formatação adicion
 
 // Função de fallback para gerar prompts offline ULTRA-TÉCNICOS
 function generateOfflinePrompts(niche: string, objective: string, type: string, userPlan: string = 'free'): string[] {
+  // Normalizar tipo vindo do frontend para chaves internas
+  const normalizedType = (type || '').toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[\s/]+/g, '-')
+
+  const typeMap: Record<string, keyof typeof proTemplates> = {
+    'artigo-de-blog': 'artigo-blog',
+    'artigo-blog': 'artigo-blog',
+    'post-para-redes-sociais': 'post-redes-sociais',
+    'post-redes-sociais': 'post-redes-sociais',
+    'email-marketing': 'email-marketing',
+  }
   
   // Templates ultra-técnicos para plano PRO
   const proTemplates = {
@@ -358,7 +396,8 @@ FRAMEWORK DE CRIAÇÃO:
 
   // Selecionar templates baseado no plano
   const templates = userPlan === 'pro' ? proTemplates : freeTemplates
-  const typeTemplates = templates[type as keyof typeof templates] || templates['artigo-blog']
+  const selectedKey = typeMap[normalizedType] || 'artigo-blog'
+  const typeTemplates = templates[selectedKey as keyof typeof templates] || templates['artigo-blog']
   
   // Número de variações baseado no plano
   const variations = userPlan === 'pro' ? 5 : 3
@@ -461,13 +500,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Gerar prompts usando OpenAI
-    const prompts = await generatePrompts(niche, objective, type, userData.plan)
+    // Gerar prompts com OpenAI; falha deve propagar erro sem fallback
+    const prompts: string[] = await generatePrompts(
+      niche,
+      objective,
+      type,
+      userData.plan,
+      { customNiche, targetAudience, companyName, additionalInfo }
+    )
 
     // Salvar prompts no banco de dados
     const promptsToInsert = prompts.map((prompt: string) => ({
       user_id: userId,
-      niche,
+      niche: customNiche && customNiche.trim().length > 0 ? customNiche.trim() : niche,
       objective,
       type,
       content: prompt,
@@ -517,6 +562,7 @@ export async function POST(request: NextRequest) {
         limit: userData.plan === 'free' ? 3 : null,
         plan: userData.plan,
       },
+      // Sem fallback: indicador offline removido
     })
 
   } catch (error) {

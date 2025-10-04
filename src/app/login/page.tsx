@@ -1,15 +1,12 @@
 'use client'
 
-import { useState, useEffect, Suspense, useRef } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Logo from '@/components/Logo'
 import { signIn } from '@/lib/auth'
 
 function LoginContent() {
-  const headerScrollRef = useRef<HTMLDivElement | null>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -27,68 +24,15 @@ function LoginContent() {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    const el = headerScrollRef.current
-    if (!el) return
-
-    const updateScrollState = () => {
-      setCanScrollLeft(el.scrollLeft > 0)
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth)
-    }
-
-    updateScrollState()
-    const onScroll = () => updateScrollState()
-    const onResize = () => updateScrollState()
-    el.addEventListener('scroll', onScroll)
-    window.addEventListener('resize', onResize)
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onResize)
-    }
-  }, [headerScrollRef])
-
-  const scrollByDelta = (delta: number) => {
-    const el = headerScrollRef.current
-    if (!el) return
-    try {
-      if (typeof el.scrollBy === 'function') {
-        el.scrollBy({ left: delta, behavior: 'smooth' } as any)
-      } else {
-        el.scrollTo({ left: el.scrollLeft + delta, behavior: 'smooth' } as any)
-      }
-    } catch {
-      el.scrollLeft = el.scrollLeft + delta
-    }
-  }
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      // Validação customizada (mensagens em português)
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(email)) {
-        setError('Por favor, insira um email válido (ex.: seu@email.com)')
-        return
-      }
-      if (!password) {
-        setError('Por favor, informe sua senha')
-        return
-      }
-
       await signIn(email, password)
       router.push('/dashboard')
     } catch (err: any) {
-      // Garantir mensagens em português
-      const msg = String(err?.message || '').toLowerCase()
-      if (msg.includes('invalid login credentials')) setError('Credenciais de login inválidas')
-      else if (msg.includes('email not confirmed')) setError('Email não confirmado')
-      else if (msg.includes('too many requests')) setError('Muitas tentativas. Tente novamente mais tarde')
-      else if (msg.includes('user not found')) setError('Usuário não encontrado')
-      else if (msg.includes('invalid email')) setError('Email inválido')
-      else if (msg.includes('password')) setError('Senha incorreta')
-      else setError('Erro ao fazer login')
+      setError(err?.message || 'Erro ao fazer login')
     } finally {
       setLoading(false)
     }
@@ -101,35 +45,16 @@ function LoginContent() {
       {/* Header */}
       <header className="fixed top-0 w-full bg-gray-900/90 backdrop-blur-md border-b border-gray-700 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <button
-              disabled={!canScrollLeft}
-              className={`md:hidden text-gray-400 hover:text-white px-2 ${!canScrollLeft ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
-              onClick={() => scrollByDelta(-180)}
-              aria-label="Scroll left"
-            >
-              ←
-            </button>
-            <div ref={headerScrollRef} className="flex-1 min-w-0 flex items-center space-x-6 overflow-x-auto whitespace-nowrap scrollbar-x w-full md:overflow-x-visible md:whitespace-normal md:pb-0">
-              <Logo size="md" showSubtitle={true} linkTo="/" />
-            <nav className="flex items-center space-x-6 w-max shrink-0 pr-2">
+          <div className="flex justify-between items-center py-4">
+            <Logo size="md" showSubtitle={true} linkTo="/" />
+            <nav className="flex items-center space-x-6">
               <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                 Início
               </Link>
-              {/* Na página de login, mostrar botão para cadastro */}
-              <Link href="/signup" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2.5 rounded-full hover:shadow-lg transition-all duration-300 font-medium">
-                Cadastrar
+              <Link href="/login" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2.5 rounded-full hover:shadow-lg transition-all duration-300 font-medium">
+                Entrar
               </Link>
             </nav>
-            </div>
-            <button
-              disabled={!canScrollRight}
-              className={`md:hidden text-gray-400 hover:text-white px-2 ${!canScrollRight ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
-              onClick={() => scrollByDelta(180)}
-              aria-label="Scroll right"
-            >
-              →
-            </button>
           </div>
         </div>
       </header>
@@ -160,7 +85,7 @@ function LoginContent() {
               </div>
             )}
 
-            <form className="mt-8 space-y-6" onSubmit={handleLogin} noValidate>
+            <form className="mt-8 space-y-6" onSubmit={handleLogin}>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email</label>

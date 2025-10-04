@@ -99,7 +99,7 @@ src/
 │   │   ├── prompts/       # Busca de prompts
 │   │   ├── stripe/        # Integração Stripe
 │   │   └── user/          # Dados do usuário
-│   ├── billing/           # Página de cobrança
+│   ├── planos/            # Página de planos
 │   ├── dashboard/         # Dashboard principal
 │   ├── login/             # Página de login
 │   └── signup/            # Página de cadastro
@@ -118,7 +118,7 @@ src/
 ## 🔐 Autenticação e Autorização
 
 - **Rotas Públicas**: `/`, `/login`, `/signup`
-- **Rotas Protegidas**: `/dashboard`, `/billing`
+- **Rotas Protegidas**: `/dashboard`, `/planos`
 - **Middleware**: Redirecionamento automático baseado no status de autenticação
 
 ## 💳 Planos de Assinatura
