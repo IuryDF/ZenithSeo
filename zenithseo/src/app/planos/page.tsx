@@ -287,10 +287,28 @@ export default function PlanosPage() {
             </button>
           </div>
         </div>
-        {/* Bloco mobile dentro do header: email e sair */}
-        <div className="md:hidden flex items-center justify-end px-4 sm:px-6 lg:px-8 py-2 gap-3">
-          <span className="text-gray-300 text-sm truncate max-w-[50vw]">Olá, {user.email}</span>
-          <button onClick={handleLogout} className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-full text-sm">Sair</button>
+        {/* Bloco mobile: chips + email e sair alinhados na mesma linha */}
+        <div className="md:hidden flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2 gap-3">
+          {userData && (
+            <div className="flex items-center gap-3">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-full px-3 py-1.5">
+                <span className="text-xs text-gray-300">Plano: </span>
+                <span className={`text-xs font-semibold ${userData.plan === 'pro' ? 'text-purple-400' : 'text-blue-400'}`}>
+                  {userData.plan === 'pro' ? 'Pro' : 'Free'}
+                </span>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-full px-3 py-1.5">
+                <span className="text-xs text-gray-300">Prompts: </span>
+                <span className="text-xs font-semibold text-green-400">
+                  {userData.plan === 'pro' ? 'Ilimitado' : `${Math.max(0, 3 - (userData.usage?.prompts_generated || 0))}/3`}
+                </span>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <span className="text-gray-300 text-sm truncate max-w-[50vw]">Olá, {user.email}</span>
+            <button onClick={handleLogout} className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-full text-sm">Sair</button>
+          </div>
         </div>
       </header>
 
