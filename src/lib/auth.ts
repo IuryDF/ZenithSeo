@@ -46,10 +46,10 @@ export async function signUp(email: string, password: string) {
   const supabase = createSupabaseClient()
   
   // Definir URL de redirecionamento após confirmar o email
-  // Em produção, use NEXT_PUBLIC_SITE_URL; em dev, usa window.location.origin
-  const baseSiteUrl = (typeof window !== 'undefined' && window.location?.origin) || ''
-  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || baseSiteUrl
-  const emailRedirectTo = `${configuredSiteUrl}/login`
+  // Prioriza NEXT_PUBLIC_SITE_URL; se não existir, usa window.location.origin
+  const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || ((typeof window !== 'undefined' && window.location?.origin) || '')
+  const siteUrl = rawSiteUrl.replace(/\/+$/, '') // remove barras finais
+  const emailRedirectTo = `${siteUrl}/login`
   
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -81,8 +81,11 @@ export async function signOut() {
 export async function resetPassword(email: string) {
   const supabase = createSupabaseClient()
   
+  // Prioriza NEXT_PUBLIC_SITE_URL; se não existir, usa window.location.origin
+  const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || ((typeof window !== 'undefined' && window.location?.origin) || '')
+  const siteUrl = rawSiteUrl.replace(/\/+$/, '')
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo: `${siteUrl}/reset-password`,
   })
 
   if (error) {
